@@ -4,6 +4,8 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
+  PaginationState,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -59,6 +61,11 @@ function generateMockUsers(count: number): User[] {
 const mockData = generateMockUsers(1000);
 
 function App() {
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
   const columns: ColumnDef<User>[] = useMemo(
     () => [
       {
@@ -95,38 +102,82 @@ function App() {
     data: mockData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
+    //no need to pass pageCount or rowCount with client-side pagination as it is calculated automatically
+    state: {
+      pagination,
+    },
   });
 
   return (
-    <table>
-      <thead>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <th key={header.id}>
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map((row) => (
-          <tr key={row.id}>
-            {row.getVisibleCells().map((cell) => (
-              <td key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <main>
+      <table>
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{ display: "flex", gap: "32px" }}>
+        <button
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          PREV
+        </button>
+        <button
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          NEXT
+        </button>
+        <label>
+          Go to Page:
+          <input
+            type="number"
+            placeholder="set Page.."
+            min={0}
+            max={table.getPageCount() - 1}
+            value={table.getState().pagination.pageIndex}
+            onChange={(e) => {
+              const page = e.target.value ? Number(e.target.value) : 0;
+              table.setPageIndex(page);
+            }}
+          />
+        </label>
+      </div>
+      <div>
+        Showing{" "}
+        {(
+          table.getRowModel().rows.length *
+          (table.getState().pagination.pageIndex + 1)
+        ).toLocaleString()}{" "}
+        of {table.getRowCount().toLocaleString()} Data
+      </div>
+    </main>
   );
 }
 
