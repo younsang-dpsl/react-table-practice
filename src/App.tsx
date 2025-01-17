@@ -63,8 +63,24 @@ function App() {
     () => [
       {
         id: "select",
-        header: (props) => <input type="checkbox" />,
-        cell: (props) => <input type="checkbox" />,
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            checked={table.getIsAllRowsSelected()}
+            onChange={() => {
+              table.toggleAllRowsSelected();
+            }}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={() => {
+              row.toggleSelected();
+            }}
+          />
+        ),
       },
       { header: "ID", accessorKey: "id" },
       {
